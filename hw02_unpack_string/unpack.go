@@ -56,7 +56,7 @@ func Unpack(str string) (string, error) { //nolint:gocognit // complexity 46. Ho
 			return "", ErrInvalidString
 		}
 
-		// Proccessing number
+		// Processing number
 		if unicode.IsDigit(v) {
 			printNum = false
 			if lastRune == backslash {
@@ -74,7 +74,7 @@ func Unpack(str string) (string, error) { //nolint:gocognit // complexity 46. Ho
 			continue
 		}
 
-		// Proccessing double backslash
+		// Processing double backslash
 		if v == backslash && lastRune == backslash {
 			_, err = fmt.Fprintf(&resultWord, "%s", string(v))
 			if err != nil {
