@@ -11,7 +11,7 @@ type Pair struct {
 	Value int
 }
 
-var re = regexp.MustCompile(`[.,()!?'"-]+`)
+var re = regexp.MustCompile(`[.,()!?^&*'";:/\\|-]+`)
 
 func Top10(s string) []string {
 	// get top 10 words from string
@@ -44,7 +44,13 @@ func Top10(s string) []string {
 	})
 
 	var result []string
-	for i := 0; i < 10; i++ {
+
+	outputSize := 10
+	if len(pairs) < 10 {
+		outputSize = len(pairs)
+	}
+
+	for i := 0; i < outputSize; i++ {
 		result = append(result, pairs[i].Key)
 	}
 
