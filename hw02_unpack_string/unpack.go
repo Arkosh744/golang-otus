@@ -2,7 +2,7 @@ package hw02unpackstring
 
 import (
 	"errors"
-	"fmt"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -13,11 +13,12 @@ const backslash rune = 92
 
 func Unpack(str string) (string, error) { //nolint:gocognit // complexity 46. How can we reduce it?
 	var (
-		err         error
-		resultWord  strings.Builder
-		lastRune    rune
-		printNum    bool
-		unpackSlash bool
+		err          error
+		resultWord   strings.Builder
+		lastRune     rune
+		printNum     bool
+		unpackSlash  bool
+		repeatNumber int
 	)
 	if len(str) == 0 {
 		return "", nil
@@ -31,10 +32,12 @@ func Unpack(str string) (string, error) { //nolint:gocognit // complexity 46. Ho
 
 		// Checking printable for printable lastRune or should we unpack slash
 		if !unicode.IsPrint(lastRune) && unicode.IsDigit(v) && unpackSlash {
-			_, err = fmt.Fprintf(&resultWord, "%s", strings.Repeat(string(backslash), int(v-'0')-1))
+			repeatNumber, err = strconv.Atoi(string(v))
 			if err != nil {
-				return resultWord.String(), err
+				return "", err
 			}
+
+			resultWord.WriteString(strings.Repeat(string(backslash), repeatNumber-1))
 			unpackSlash = false
 			lastRune = 0
 			continue
@@ -45,10 +48,12 @@ func Unpack(str string) (string, error) { //nolint:gocognit // complexity 46. Ho
 
 		// Checking for double numbers in a row with printNum flag
 		if unicode.IsDigit(v) && unicode.IsDigit(lastRune) && printNum {
-			_, err = fmt.Fprintf(&resultWord, "%s", strings.Repeat(string(lastRune), int(v-'0')))
+			repeatNumber, err = strconv.Atoi(string(v))
 			if err != nil {
-				return resultWord.String(), err
+				return "", err
 			}
+
+			resultWord.WriteString(strings.Repeat(string(lastRune), repeatNumber))
 			printNum = false
 			lastRune = 0
 			continue
@@ -65,21 +70,19 @@ func Unpack(str string) (string, error) { //nolint:gocognit // complexity 46. Ho
 				continue
 			}
 
-			// Subtract 48 ('0') from the rune to get the int number
-			_, err = fmt.Fprintf(&resultWord, "%s", strings.Repeat(string(lastRune), int(v-'0')))
+			repeatNumber, err = strconv.Atoi(string(v))
 			if err != nil {
-				return resultWord.String(), err
+				return "", err
 			}
+
+			resultWord.WriteString(strings.Repeat(string(lastRune), repeatNumber))
 			lastRune = v
 			continue
 		}
 
 		// Processing double backslash
 		if v == backslash && lastRune == backslash {
-			_, err = fmt.Fprintf(&resultWord, "%s", string(v))
-			if err != nil {
-				return resultWord.String(), err
-			}
+			resultWord.WriteRune(v)
 			unpackSlash = true
 			lastRune = 0
 			continue
@@ -87,19 +90,13 @@ func Unpack(str string) (string, error) { //nolint:gocognit // complexity 46. Ho
 
 		// Scan into results if lastRune is not a number with printNum flag
 		if !unicode.IsDigit(lastRune) || printNum {
-			_, err = fmt.Fprintf(&resultWord, "%s", string(lastRune))
-			if err != nil {
-				return resultWord.String(), err
-			}
+			resultWord.WriteRune(lastRune)
 		}
 		lastRune = v
 	}
 
 	if lastRune != 0 {
-		_, err = fmt.Fprintf(&resultWord, "%s", string(lastRune))
-		if err != nil {
-			return resultWord.String(), err
-		}
+		resultWord.WriteRune(lastRune)
 	}
 
 	return resultWord.String(), nil
