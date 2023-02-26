@@ -10,6 +10,7 @@ import (
 )
 
 func TestCache(t *testing.T) {
+	var exists bool
 	t.Run("empty cache", func(t *testing.T) {
 		c := NewCache(10)
 
@@ -50,7 +51,64 @@ func TestCache(t *testing.T) {
 	})
 
 	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+		c := NewCache(1)
+		exists = c.Set("aaa", 100)
+		require.False(t, exists)
+		val, ok := c.Get("aaa")
+		require.True(t, ok)
+		require.Equal(t, 100, val)
+
+		c.Clear()
+		val, ok = c.Get("aaa")
+		require.False(t, ok)
+		require.Nil(t, val)
+	})
+
+	t.Run("push from cache", func(t *testing.T) {
+		c := NewCache(3)
+
+		exists = c.Set("aaa", 100)
+		require.False(t, exists)
+		exists = c.Set("bbb", 200)
+		require.False(t, exists)
+		exists = c.Set("ccc", 300)
+		require.False(t, exists)
+
+		exists = c.Set("ddd", 400)
+		require.False(t, exists)
+
+		val, ok := c.Get("ddd")
+		require.True(t, ok)
+		require.Equal(t, 400, val)
+
+		val, ok = c.Get("aaa")
+		require.False(t, ok)
+		require.Nil(t, val)
+	})
+
+	t.Run("push old element from cache", func(t *testing.T) {
+		c := NewCache(3)
+
+		exists = c.Set("aaa", 100)
+		require.False(t, exists)
+		exists = c.Set("bbb", 200)
+		require.False(t, exists)
+		exists = c.Set("ccc", 300)
+		require.False(t, exists)
+
+		val, ok := c.Get("aaa")
+		require.True(t, ok)
+		require.Equal(t, 100, val)
+		val, ok = c.Get("bbb")
+		require.True(t, ok)
+		require.Equal(t, 200, val)
+
+		exists = c.Set("ddd", 400)
+		require.False(t, exists)
+
+		val, ok = c.Get("ccc")
+		require.False(t, ok)
+		require.Nil(t, val)
 	})
 }
 
