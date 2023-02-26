@@ -1,6 +1,8 @@
 package hw04lrucache
 
-import "sync"
+import (
+	"sync"
+)
 
 type Key string
 
@@ -8,6 +10,11 @@ type Cache interface {
 	Set(key Key, value interface{}) bool
 	Get(key Key) (interface{}, bool)
 	Clear()
+}
+
+type cacheItem struct {
+	key   Key
+	value interface{}
 }
 
 type lruCache struct {
@@ -32,29 +39,31 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 
 	if item, ok := c.items[key]; ok {
 		c.queue.MoveToFront(item)
-		return item.Value, true
+		return item.Value.(*cacheItem).value, true
 	}
 
 	return nil, false
 }
 
+// Set returns true if the key was in the cache, false otherwise.
 func (c *lruCache) Set(key Key, value interface{}) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	newItem := &cacheItem{key: key, value: value}
 
 	if item, ok := c.items[key]; ok {
 		c.queue.MoveToFront(item)
-		item.Value = value
+		item.Value = newItem
 		return true
 	}
 
 	if c.queue.Len() == c.capacity {
 		lastItem := c.queue.Back()
 		c.queue.Remove(lastItem)
-		delete(c.items, key)
+		delete(c.items, lastItem.Value.(*cacheItem).key)
 	}
 
-	c.items[key] = c.queue.PushFront(value)
+	c.items[key] = c.queue.PushFront(newItem)
 
 	return false
 }
