@@ -33,7 +33,6 @@ func (te *taskManagement) checkErrorsLimitExceeded() bool {
 	return te.getErrCount() >= int32(te.m) && te.breakOnErrLimit
 }
 
-// add constructor for taskErrors
 func newTaskManagement(m int) *taskManagement {
 	te := taskManagement{m: m}
 	if m > 0 {
@@ -70,7 +69,6 @@ func taskWorker(cancel chan struct{}, taskChan <-chan Task, tasksMan *taskManage
 	defer tasksMan.wg.Done()
 
 	for {
-
 		if tasksMan.checkErrorsLimitEquals() {
 			cancel <- struct{}{}
 			return
