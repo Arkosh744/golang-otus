@@ -15,12 +15,6 @@ var (
 	ErrFileAlreadyExists     = errors.New("file already exists")
 )
 
-type copyBufferStruct struct {
-	buffer           []byte
-	totalBytesCopied int64
-	limit            int64
-}
-
 func CopyFile(fromPath, toPath string, offset, limit int64) error {
 	srcFile, err := os.Open(fromPath)
 	if err != nil {
@@ -63,19 +57,14 @@ func CopyFile(fromPath, toPath string, offset, limit int64) error {
 		limit = srcFileSize - offset
 	}
 
-	bufferStruct := copyBufferStruct{
-		buffer:           make([]byte, 8),
-		totalBytesCopied: 0,
-		limit:            limit,
-	}
-
-	bufferStruct.totalBytesCopied, err = processCopy(srcFile, dstFile, bufferStruct)
+	var totalBytesCopied int64
+	totalBytesCopied, err = processCopy(srcFile, dstFile, limit)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("\nCopying finished.")
-	fmt.Println("Result file size:", bufferStruct.totalBytesCopied, "bytes")
+	fmt.Println("Result file size:", totalBytesCopied, "bytes")
 	fmt.Println("Result file path:", toPath)
 	return nil
 }
@@ -83,10 +72,13 @@ func CopyFile(fromPath, toPath string, offset, limit int64) error {
 func processCopy(
 	srcFile *os.File,
 	dstFile *os.File,
-	bufferStruct copyBufferStruct,
+	limit int64,
 ) (int64, error) {
+	var totalBytesCopied int64
+	buffer := make([]byte, 8)
+
 	for {
-		bytesRead, readErr := srcFile.Read(bufferStruct.buffer)
+		bytesRead, readErr := srcFile.Read(buffer)
 		if readErr != nil && readErr != io.EOF {
 			return 0, readErr
 		}
@@ -96,24 +88,23 @@ func processCopy(
 		}
 
 		bytesToWrite := bytesRead
-		if bufferStruct.totalBytesCopied+int64(bytesRead) > limit {
-			bytesToWrite = int(limit - bufferStruct.totalBytesCopied)
+		if totalBytesCopied+int64(bytesRead) > limit {
+			bytesToWrite = int(limit - totalBytesCopied)
 		}
 
-		bytesWritten, writeErr := dstFile.Write(bufferStruct.buffer[:bytesToWrite])
+		bytesWritten, writeErr := dstFile.Write(buffer[:bytesToWrite])
 		if writeErr != nil {
 			return 0, writeErr
 		}
 
-		bufferStruct.totalBytesCopied += int64(bytesWritten)
-		printProgress(bufferStruct.totalBytesCopied, limit)
+		totalBytesCopied += int64(bytesWritten)
+		printProgress(totalBytesCopied, limit)
 
-		if bufferStruct.totalBytesCopied >= limit {
+		if totalBytesCopied >= limit {
 			break
 		}
-
 	}
-	return bufferStruct.totalBytesCopied, nil
+	return totalBytesCopied, nil
 }
 
 func isSpecialMode(fileMode fs.FileMode) bool {
