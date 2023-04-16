@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"os"
 )
 
 var (
@@ -18,5 +20,15 @@ func init() {
 
 func main() {
 	flag.Parse()
-	// Place your code here.
+
+	if from == "" || to == "" {
+		fmt.Println("Error: 'from' OR 'to' flags are both required")
+		os.Exit(1)
+	}
+
+	err := CopyFile(from, to, offset, limit)
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
 }
