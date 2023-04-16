@@ -105,10 +105,8 @@ func compareFiles(file1, file2 *os.File) bool {
 
 func TestCopyFile(t *testing.T) {
 	type args struct {
-		fromPath string
-		toPath   string
-		offset   int64
-		limit    int64
+		offset int64
+		limit  int64
 	}
 	tests := []struct {
 		name       string
