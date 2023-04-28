@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -24,14 +25,21 @@ func RunCmd(cmd []string, env Environment, stdout, stderr io.Writer) (returnCode
 		}
 	}
 
-	execCmd := exec.Command(cmd[0], cmd[1:]...)
+	executablePath, err := exec.LookPath(cmd[0])
+	if err != nil {
+		fmt.Printf("Executable not found: %v\n", err)
+		return 1
+	}
+
+	execCmd := exec.Command(executablePath, cmd[1:]...)
 	execCmd.Stdin = os.Stdin
 	execCmd.Stdout = stdout
 	execCmd.Stderr = stderr
 
-	err := execCmd.Run()
+	err = execCmd.Run()
 
-	if exitErr, ok := err.(*exec.ExitError); ok {
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
 		waitStatus := exitErr.Sys().(syscall.WaitStatus)
 		returnCode = waitStatus.ExitStatus()
 	} else {

@@ -13,12 +13,12 @@ func TestReadDir(t *testing.T) {
 	}
 	defer os.RemoveAll(testDir)
 
-	err = os.WriteFile(filepath.Join(testDir, "FOO"), []byte("123\n"), 0644)
+	err = os.WriteFile(filepath.Join(testDir, "FOO"), []byte("123\n"), 0o644)
 	if err != nil {
 		t.Fatalf("Failed to write test file: %v", err)
 	}
 
-	err = os.WriteFile(filepath.Join(testDir, "BAR"), []byte("value"), 0644)
+	err = os.WriteFile(filepath.Join(testDir, "BAR"), []byte("value"), 0o644)
 	if err != nil {
 		t.Fatalf("Failed to write test file: %v", err)
 	}
