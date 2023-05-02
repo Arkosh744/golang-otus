@@ -23,7 +23,6 @@ func RunCmd(cmd []string, env Environment, stdout, stderr io.Writer) int {
 		if err := os.Setenv(key, value.Value); err != nil {
 			fmt.Println(err)
 		}
-
 	}
 
 	executablePath, err := exec.LookPath(cmd[0])
