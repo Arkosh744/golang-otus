@@ -10,24 +10,26 @@ import (
 )
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
-func RunCmd(cmd []string, env Environment, stdout, stderr io.Writer) (returnCode int) {
+func RunCmd(cmd []string, env Environment, stdout, stderr io.Writer) int {
 	for key, value := range env {
 		if value.NeedRemove {
-			err := os.Unsetenv(key)
-			if err != nil {
+			if err := os.Unsetenv(key); err != nil {
 				fmt.Println(err)
 			}
-		} else {
-			err := os.Setenv(key, value.Value)
-			if err != nil {
-				fmt.Println(err)
-			}
+
+			continue
 		}
+
+		if err := os.Setenv(key, value.Value); err != nil {
+			fmt.Println(err)
+		}
+
 	}
 
 	executablePath, err := exec.LookPath(cmd[0])
 	if err != nil {
 		fmt.Printf("Executable not found: %v\n", err)
+
 		return 1
 	}
 
@@ -36,15 +38,12 @@ func RunCmd(cmd []string, env Environment, stdout, stderr io.Writer) (returnCode
 	execCmd.Stdout = stdout
 	execCmd.Stderr = stderr
 
-	err = execCmd.Run()
-
 	var exitErr *exec.ExitError
-	if errors.As(err, &exitErr) {
+	if err = execCmd.Run(); errors.As(err, &exitErr) {
 		waitStatus := exitErr.Sys().(syscall.WaitStatus)
-		returnCode = waitStatus.ExitStatus()
-	} else {
-		returnCode = 0
+
+		return waitStatus.ExitStatus()
 	}
 
-	return
+	return 0
 }

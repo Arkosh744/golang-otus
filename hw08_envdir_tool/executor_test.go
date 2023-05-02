@@ -12,8 +12,7 @@ func TestRunCmd(t *testing.T) {
 		"BAR": EnvValue{Value: "value"},
 	}
 
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	var stdout, stderr bytes.Buffer
 
 	returnCode := RunCmd([]string{"env"}, env, &stdout, &stderr)
 
