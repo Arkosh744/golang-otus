@@ -1,4 +1,4 @@
-package memorystorage
+package memrepo
 
 import "testing"
 

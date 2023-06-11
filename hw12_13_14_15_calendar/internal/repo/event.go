@@ -1,7 +1,6 @@
-package storage
+package repo
 
 type Event struct {
 	ID    string
 	Title string
-	// TODO
 }

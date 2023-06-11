@@ -1,0 +1,16 @@
+host: "localhost"
+port: 8080
+
+log:
+  preset: "dev"
+#  preset: "prod"
+
+#storage: "memory"
+storage: "postgres"
+
+postgres:
+  host: localhost
+  port: 5442
+  user: calendar-user
+  password: calendar-pass
+  database: calendar-db

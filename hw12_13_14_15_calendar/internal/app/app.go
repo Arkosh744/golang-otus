@@ -2,25 +2,79 @@ package app
 
 import (
 	"context"
+	"net"
+	"net/http"
+	"time"
+
+	"github.com/Arkosh744/otus-go/hw12_13_14_15_calendar/internal/config"
+	"github.com/Arkosh744/otus-go/hw12_13_14_15_calendar/internal/handlers"
+	"github.com/Arkosh744/otus-go/hw12_13_14_15_calendar/internal/log"
 )
 
-type App struct { // TODO
+type App struct {
+	serviceProvider *serviceProvider
+	httpServer      *http.Server
 }
 
-type Logger interface { // TODO
+func NewApp(ctx context.Context) (*App, error) {
+	app := &App{}
+
+	err := app.initDeps(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return app, nil
 }
 
-type Storage interface { // TODO
-}
+func (app *App) Run() error {
+	if err := app.RunHTTPServer(); err != nil {
+		log.Fatalf("ERR: ", err)
+	}
 
-func New(logger Logger, storage Storage) *App {
-	return &App{}
-}
-
-func (a *App) CreateEvent(ctx context.Context, id, title string) error {
-	// TODO
 	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
 }
 
-// TODO
+func (app *App) initDeps(ctx context.Context) error {
+	for _, init := range []func(context.Context) error{
+		config.Init,
+		log.InitLogger,
+		app.initServiceProvider,
+		app.initHTTPServer,
+	} {
+		if err := init(ctx); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (app *App) initServiceProvider(ctx context.Context) error {
+	app.serviceProvider = newServiceProvider(ctx)
+
+	return nil
+}
+
+func (app *App) initHTTPServer(_ context.Context) error {
+	const timeout = 15
+
+	app.httpServer = &http.Server{
+		Addr:         net.JoinHostPort(config.AppConfig.Host, config.AppConfig.Port),
+		Handler:      handlers.InitRouter(app.serviceProvider.calendarService),
+		ReadTimeout:  timeout * time.Second,
+		WriteTimeout: timeout * time.Second,
+	}
+
+	return nil
+}
+
+func (app *App) RunHTTPServer() error {
+	log.Infof("Start: HTTP server listening on port %s", config.AppConfig.Port)
+
+	if err := app.httpServer.ListenAndServe(); err != nil {
+		return err
+	}
+
+	return nil
+}
