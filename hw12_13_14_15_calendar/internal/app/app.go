@@ -2,12 +2,18 @@ package app
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
+	"os/signal"
+	"syscall"
 	"time"
 
+	"github.com/Arkosh744/otus-go/hw12_13_14_15_calendar/internal/closer"
 	"github.com/Arkosh744/otus-go/hw12_13_14_15_calendar/internal/config"
 	"github.com/Arkosh744/otus-go/hw12_13_14_15_calendar/internal/handlers"
+	"github.com/Arkosh744/otus-go/hw12_13_14_15_calendar/internal/handlers/middlewares"
 	"github.com/Arkosh744/otus-go/hw12_13_14_15_calendar/internal/log"
 )
 
@@ -27,10 +33,23 @@ func NewApp(ctx context.Context) (*App, error) {
 	return app, nil
 }
 
-func (app *App) Run() error {
-	if err := app.RunHTTPServer(); err != nil {
-		log.Fatalf("ERR: ", err)
-	}
+func (app *App) Run(ctx context.Context) error {
+	defer func() {
+		closer.CloseAll()
+		closer.Wait()
+	}()
+
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
+
+	go func() {
+		if err := app.RunHTTPServer(ctx); err != nil {
+			log.Fatalf("failed to run http server: %v", err)
+		}
+	}()
+	defer app.StopHTTPServer()
+
+	<-ctx.Done()
 
 	return nil
 }
@@ -59,9 +78,11 @@ func (app *App) initServiceProvider(ctx context.Context) error {
 func (app *App) initHTTPServer(_ context.Context) error {
 	const timeout = 15
 
+	h := handlers.InitRouter(app.serviceProvider.calendarService)
+
 	app.httpServer = &http.Server{
 		Addr:         net.JoinHostPort(config.AppConfig.Host, config.AppConfig.Port),
-		Handler:      handlers.InitRouter(app.serviceProvider.calendarService),
+		Handler:      middlewares.LoggingMiddleware(h),
 		ReadTimeout:  timeout * time.Second,
 		WriteTimeout: timeout * time.Second,
 	}
@@ -69,12 +90,26 @@ func (app *App) initHTTPServer(_ context.Context) error {
 	return nil
 }
 
-func (app *App) RunHTTPServer() error {
+func (app *App) RunHTTPServer(_ context.Context) error {
 	log.Infof("Start: HTTP server listening on port %s", config.AppConfig.Port)
 
-	if err := app.httpServer.ListenAndServe(); err != nil {
-		return err
+	if err := app.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return fmt.Errorf("failed to start http server: %w", err)
 	}
 
 	return nil
+}
+
+func (app *App) StopHTTPServer() {
+	log.Infof("Stop: HTTP server on port %s", config.AppConfig.Port)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer func() {
+		log.Info("Shutdown http server")
+		cancel()
+	}()
+
+	if err := app.httpServer.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Info("failed to stop http server: %v", err)
+	}
 }

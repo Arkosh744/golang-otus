@@ -23,35 +23,8 @@ func main() {
 		log.Fatalf("failed to initialize app: %v", err)
 	}
 
-	if err = a.Run(); err != nil {
+	if err = a.Run(ctx); err != nil {
 		log.Fatalf("failed to run app: %v", err)
 	}
 
-	//storage := memorystorage.New()
-	//calendar := app.New(logg, storage)
-	//
-	//server := internalhttp.NewServer(logg, calendar)
-	//
-	//ctx, cancel := signal.NotifyContext(context.Background(),
-	//	syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	//defer cancel()
-	//
-	//go func() {
-	//	<-ctx.Done()
-	//
-	//	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-	//	defer cancel()
-	//
-	//	if err := server.Stop(ctx); err != nil {
-	//		logg.Error("failed to stop http server: " + err.Error())
-	//	}
-	//}()
-	//
-	//logg.Info("calendar is running...")
-	//
-	//if err := server.Start(ctx); err != nil {
-	//	logg.Error("failed to start http server: " + err.Error())
-	//	cancel()
-	//	os.Exit(1) //nolint:gocritic
-	//}
 }

@@ -9,9 +9,9 @@ type CalendarService interface {
 
 func InitRouter(serv CalendarService) *http.ServeMux {
 	mux := http.NewServeMux()
+	handlers := NewHandlers(serv)
 
-	//addToCart := add.NewHandler(serv).Handle
-	//mux.Handle("/addToCart", wrappers.New(addToCart))
+	mux.HandleFunc("/hello", handlers.hello)
 
 	return mux
 }
