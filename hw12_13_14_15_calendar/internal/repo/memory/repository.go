@@ -10,49 +10,54 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-type storage struct {
+type repository struct {
 	events map[uuid.UUID]*models.Event
-	mu     sync.RWMutex
+	mu     sync.Mutex
 }
 
-func NewRepo() *storage {
-	return &storage{
+func NewRepo() *repository {
+	return &repository{
 		events: make(map[uuid.UUID]*models.Event),
 	}
 }
 
-func (m *storage) CreateEvent(_ context.Context, e *models.Event) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (r *repository) CreateEvent(_ context.Context, event *models.Event) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-	m.events[e.ID] = e
-
-	return nil
-}
-
-func (m *storage) UpdateEvent(_ context.Context, e *models.Event) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	m.events[e.ID] = e
+	r.events[event.ID] = event
 
 	return nil
 }
 
-func (m *storage) DeleteEvent(_ context.Context, id uuid.UUID) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (r *repository) UpdateEvent(_ context.Context, event *models.Event) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-	delete(m.events, id)
+	_, ok := r.events[event.ID]
+	if !ok {
+		return repo.ErrEventNotExist
+	}
+
+	r.events[event.ID] = event
 
 	return nil
 }
 
-func (m *storage) GetEventByID(_ context.Context, id uuid.UUID) (*models.Event, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (r *repository) DeleteEvent(_ context.Context, id uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
-	event, ok := m.events[id]
+	delete(r.events, id)
+
+	return nil
+}
+
+func (r *repository) GetEventByID(_ context.Context, id uuid.UUID) (*models.Event, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	event, ok := r.events[id]
 	if !ok {
 		return nil, repo.ErrEventNotExist
 	}
@@ -60,9 +65,12 @@ func (m *storage) GetEventByID(_ context.Context, id uuid.UUID) (*models.Event, 
 	return event, nil
 }
 
-func (m *storage) ListEventsByPeriod(_ context.Context, start, end time.Time, limit int) ([]*models.Event, error) {
+func (r *repository) ListEventsByPeriod(_ context.Context, start, end time.Time, limit int) ([]*models.Event, error) {
 	var res []*models.Event
-	for _, e := range m.events {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for _, e := range r.events {
 		if len(res) >= limit {
 			break
 		}
@@ -71,5 +79,6 @@ func (m *storage) ListEventsByPeriod(_ context.Context, start, end time.Time, li
 			res = append(res, e)
 		}
 	}
+
 	return res, nil
 }
