@@ -8,7 +8,7 @@ type (
 
 type Stage func(in In) (out Out)
 
-func ExecutePipeline(in In, done In, stages ...Stage) Out {
+func ExecutePipeline(in, done In, stages ...Stage) Out {
 	out := processStage(in, done)
 
 	for _, stage := range stages {
@@ -18,7 +18,7 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	return out
 }
 
-func processStage(in In, done In) Out {
+func processStage(in, done In) Out {
 	out := make(Bi)
 
 	go func() {
