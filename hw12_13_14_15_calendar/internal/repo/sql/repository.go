@@ -43,14 +43,14 @@ func (r *repository) CreateEvent(ctx context.Context, event *models.Event) error
 }
 
 func (r *repository) UpdateEvent(ctx context.Context, event *models.Event) error {
-	sq := sq.Update(tableEvents).
+	builder := sq.Update(tableEvents).
 		Set("title", event.Title).
 		Set("description", event.Description).
 		Set("start", event.StartAt).
 		Set("end", event.EndAt).
 		Where(sq.Eq{"id": event.ID})
 
-	query, args, err := sq.ToSql()
+	query, args, err := builder.ToSql()
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,6 @@ func (r *repository) GetEventByID(ctx context.Context, id uuid.UUID) (*models.Ev
 
 	var event *models.Event
 	if err := r.client.PG().ScanOneContext(ctx, &event, q, args...); err != nil {
-
 		return nil, err
 	}
 
@@ -114,7 +113,6 @@ func (r *repository) GetEventByID(ctx context.Context, id uuid.UUID) (*models.Ev
 }
 
 func (r *repository) ListEventsByPeriod(ctx context.Context, start, end time.Time, limit int) ([]*models.Event, error) {
-
 	builder := sq.Select("id", "title", "description", "start_at", "end_at").
 		From(tableEvents).
 		Where(sq.And{

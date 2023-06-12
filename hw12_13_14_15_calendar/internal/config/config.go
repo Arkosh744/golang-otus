@@ -18,6 +18,7 @@ const (
 	StoragePostgres = "postgres"
 )
 
+//nolint:gochecknoinits // it is ok to use init to get config file path from flags
 func init() {
 	flag.StringVar(&configFile, "config", defaultConfigPath, "Path to configuration file")
 }

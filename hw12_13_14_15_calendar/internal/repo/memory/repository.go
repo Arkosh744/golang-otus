@@ -67,6 +67,7 @@ func (r *repository) GetEventByID(_ context.Context, id uuid.UUID) (*models.Even
 
 func (r *repository) ListEventsByPeriod(_ context.Context, start, end time.Time, limit int) ([]*models.Event, error) {
 	var res []*models.Event
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

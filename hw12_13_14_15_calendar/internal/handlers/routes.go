@@ -4,8 +4,7 @@ import (
 	"net/http"
 )
 
-type CalendarService interface {
-}
+type CalendarService interface{}
 
 func InitRouter(serv CalendarService) *http.ServeMux {
 	mux := http.NewServeMux()

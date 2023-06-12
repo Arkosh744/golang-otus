@@ -13,6 +13,7 @@ func main() {
 
 	if flag.Arg(0) == "version" {
 		printVersion()
+
 		return
 	}
 
@@ -26,5 +27,4 @@ func main() {
 	if err = a.Run(ctx); err != nil {
 		log.Fatalf("failed to run app: %v", err)
 	}
-
 }

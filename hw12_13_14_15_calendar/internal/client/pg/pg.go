@@ -38,6 +38,16 @@ type PG interface {
 	Close() error
 }
 
+type pg struct {
+	pgxPool *pgxpool.Pool
+}
+
+func (p *pg) Close() error {
+	p.pgxPool.Close()
+
+	return nil
+}
+
 func (p *pg) ScanOneContext(ctx context.Context, dest interface{}, q Query, args ...interface{}) error {
 	rows, err := p.QueryContext(ctx, q, args...)
 	if err != nil {
@@ -54,16 +64,6 @@ func (p *pg) ScanAllContext(ctx context.Context, dest interface{}, q Query, args
 	}
 
 	return pgxscan.ScanAll(dest, rows)
-}
-
-type pg struct {
-	pgxPool *pgxpool.Pool
-}
-
-func (p *pg) Close() error {
-	p.pgxPool.Close()
-
-	return nil
 }
 
 func (p *pg) Ping(ctx context.Context) error {

@@ -39,7 +39,7 @@ func (app *App) Run(ctx context.Context) error {
 		closer.Wait()
 	}()
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
 	go func() {
@@ -47,7 +47,8 @@ func (app *App) Run(ctx context.Context) error {
 			log.Fatalf("failed to run http server: %v", err)
 		}
 	}()
-	defer app.StopHTTPServer()
+
+	defer app.StopHTTPServer(ctx)
 
 	<-ctx.Done()
 
@@ -100,10 +101,10 @@ func (app *App) RunHTTPServer(_ context.Context) error {
 	return nil
 }
 
-func (app *App) StopHTTPServer() {
+func (app *App) StopHTTPServer(ctx context.Context) {
 	log.Infof("Stop: HTTP server on port %s", config.AppConfig.Port)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer func() {
 		log.Info("Shutdown http server")
 		cancel()

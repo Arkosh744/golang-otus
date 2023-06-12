@@ -1,6 +1,18 @@
 version: "3"
 
 services:
+  calendar:
+    image: calendar
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    networks:
+      - calendar_network
+    ports:
+      - "8080:8080"
+    depends_on:
+      - calendar_postgres
+
   calendar_postgres:
     image: postgres:15.1
     environment:
