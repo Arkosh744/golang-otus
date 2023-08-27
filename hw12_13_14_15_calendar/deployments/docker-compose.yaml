@@ -1,1 +1,34 @@
 version: "3"
+
+services:
+  calendar:
+    image: calendar
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    networks:
+      - calendar_network
+    ports:
+      - "8080:8080"
+    depends_on:
+      - calendar_postgres
+
+  calendar_postgres:
+    image: postgres:15.1
+    environment:
+      POSTGRES_USER: calendar-user
+      POSTGRES_PASSWORD: calendar-pass
+      POSTGRES_DB: calendar-db
+    networks:
+      - calendar_network
+    ports:
+      - "5442:5432"
+    volumes:
+      - calendar_postgres_data:/var/lib/postgresql/data/
+
+
+networks:
+  calendar_network:
+
+volumes:
+  calendar_postgres_data:
